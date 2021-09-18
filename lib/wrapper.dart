@@ -25,14 +25,16 @@ class Wrapper extends StatelessWidget {
                     .get(),
                 builder: (BuildContext context, snapshot) {
                   if (snapshot.hasData) {
-                    print(snapshot.data);
-                    print((snapshot.data as DocumentSnapshot).data());
+                    Map data =
+                        (snapshot.data as DocumentSnapshot).data() as Map;
+                    print(data);
+                    username = data['username'];
                   }
                   // username = snapshot.data.toString();
-                  return (!snapshot.hasData)
-                      ? RoomCodePage()
-                      : LandingPage(
-                          username: ''); //LandingPage(username: username);
+                  return (snapshot.hasData)
+                      ? LandingPage(username: username)
+                      : Container(
+                          /* we can have a spinner here to make it look nice */);
                 },
               )
             : RoomCodePage();

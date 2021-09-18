@@ -27,9 +27,10 @@ class _LandingPageState extends State<LandingPage> {
 
   String roomCode = '';
 
-  void nextScreen(int nextScreen) {
+  void nextScreen(int nextScreen, String roomCode) {
     setState(() {
       screenIndex = nextScreen;
+      this.roomCode = roomCode;
     });
   }
 
@@ -72,7 +73,7 @@ class CreateJoinRoom extends StatefulWidget {
       : super(key: key);
 
   String username;
-  Function callback;
+  Function(int, String) callback;
 
   @override
   CreateJoinRoomState createState() => CreateJoinRoomState();
@@ -115,7 +116,26 @@ class CreateJoinRoomState extends State<CreateJoinRoom> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () async {},
+              onPressed: () async {
+                String roomCode = _roomcodeController.text;
+                DocumentSnapshot data =
+                    await _firestore.collection('rooms').doc(roomCode).get();
+                if (data.exists) {
+                  Map roomDetails = data.data() as Map;
+                  List players = roomDetails['players'];
+                  players.add(username);
+                  await _firestore
+                      .collection('rooms')
+                      .doc(roomCode)
+                      .update({'players': players});
+                  setState(() {
+                    roomCode = roomCode;
+                    widget.callback(Screens.Lobby.index, roomCode);
+                  });
+                } else {
+                  print('room does not exist');
+                }
+              },
               style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all(buttonColor)),
               child: Text('Join Room'),
@@ -126,10 +146,12 @@ class CreateJoinRoomState extends State<CreateJoinRoom> {
             ElevatedButton(
               onPressed: () async {
                 String roomCode = generateRandomCode();
+                print(roomCode);
                 _firestore.collection('rooms').doc(roomCode).set({
+                  'host': username,
                   'players': [username]
                 });
-                widget.callback(Screens.JoinCreate.index);
+                widget.callback(Screens.Lobby.index, roomCode);
               },
               style: ButtonStyle(
                   backgroundColor: MaterialStateProperty.all(buttonColor)),
